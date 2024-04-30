@@ -201,7 +201,7 @@ trait SimpleHash {
 <li>instead of using <code>core::hash::Hash</code> I decided to go with a simpler custom trait that just returns a plain number as a hashsum. Now I can easily implement it for <code>&amp;str</code> and keep things simple.</li>
 </ol>
 <p>Each node has 4 children and when we compute the hash of <code>K</code> we break it down to groups of 2 bits (that's 4 distinct values, that's why we have 4 children) and literally take a route from the root to the leaf that matches our byte groups. If some parts of the path do not exist we construct them on-the-fly.</p>
-<p><img src="../intrusive_hashmaps.png" alt="intrusive_hashmaps.png" /></p>
+<p><img src="./intrusive_hashmaps.png" alt="intrusive_hashmaps.png" /></p>
 <p>So on each iteration we:</p>
 <ol>
 <li>look at <code>children[h &gt;&gt; 62]</code></li>
