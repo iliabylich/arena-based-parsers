@@ -1,0 +1,818 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Arena-based parsers</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="tldr.html">TL;DR</a></li><li class="chapter-item expanded "><a href="what_is_arena_allocator.html"><strong aria-hidden="true">1.</strong> What is arena allocator</a></li><li class="chapter-item expanded "><a href="intrusive_data_structures.html"><strong aria-hidden="true">2.</strong> Intrusive data structures</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intrusive_single_linked_list.html"><strong aria-hidden="true">2.1.</strong> Single linked list</a></li><li class="chapter-item expanded "><a href="intrusive_double_linked_list.html"><strong aria-hidden="true">2.2.</strong> Double linked list</a></li><li class="chapter-item expanded "><a href="intrusive_hashmaps.html"><strong aria-hidden="true">2.3.</strong> Hashmaps</a></li><li class="chapter-item expanded "><a href="dynamic_consecutive_arrays.html"><strong aria-hidden="true">2.4.</strong> Dynamic consecutive arrays</a></li></ol></li><li class="chapter-item expanded "><a href="allocator_implementation.html"><strong aria-hidden="true">3.</strong> Allocator implementation</a></li><li class="chapter-item expanded "><a href="ast_nodes.html"><strong aria-hidden="true">4.</strong> AST nodes</a></li><li class="chapter-item expanded "><a href="no_std.html"><strong aria-hidden="true">5.</strong> #![no_std]</a></li><li class="chapter-item expanded "><a href="benchmarks.html"><strong aria-hidden="true">6.</strong> Benchmarks</a></li><li class="chapter-item expanded "><a href="flamegraphs.html"><strong aria-hidden="true">7.</strong> Flamegraphs</a></li><li class="chapter-item expanded "><a href="memory_usage_optimisations.html"><strong aria-hidden="true">8.</strong> Memory usage optimisations</a></li><li class="chapter-item expanded "><a href="ast_caching.html"><strong aria-hidden="true">9.</strong> AST caching</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Arena-based parsers</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="tldr"><a class="header" href="#tldr">TL;DR</a></h1>
+<p>This micro-book is about programming language parsers, memory allocations and arenas.</p>
+<ul>
+<li>The change that I'm describing here made a parser that I created in the past to go from 37MB/s to 80MB/s (which is roughly a 2x improvement)</li>
+<li>I was able to completely eliminate all heap allocations (the parser is written in Rust, so it runs in <code>#[no_std]</code> mode)</li>
+<li>Result of the parsing is located exclusively on arena, so the whole blob of underlying memory can be written on disk and later <code>mmap</code>-ed to quickly get it back if needed, so AST caching is significantly easier.</li>
+</ul>
+<p>The code is a bit "experimental" but it's available in the <a href="https://github.com/lib-ruby-parser/lib-ruby-parser/tree/arena-fixes"><code>arena-fixes</code> branch</a> (make sure to enable <code>--features=development</code> if you run it from a Git repo)</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="what-is-arena-allocator"><a class="header" href="#what-is-arena-allocator">What is arena allocator</a></h1>
+<blockquote>
+<p>An allocator is a library that allows your program to dynamically allocate and release memory.</p>
+</blockquote>
+<p>These days most widely used allocator are global, i.e. they are configured once for the whole program and they provide functions like <code>malloc</code>, <code>free</code> (and possibly some optimised versions of <code>calloc</code> and friends) for memory management. You might've heard of some of them:</p>
+<ul>
+<li><code>glibc</code> allocator</li>
+<li><code>jemalloc</code></li>
+<li><code>tcmalloc</code></li>
+<li><code>mimalloc</code></li>
+</ul>
+<p>They all have their own unique properties (general availability/specific performance traits/better tracing/etc) but they all share something in common: they are globally set. You can't easily "swap" allocators at runtime unless your code is written specifically to support it (like it's done in Zig for example).</p>
+<p>Arena allocators on the other side are usually "local" to your code, i.e. they have to be passed explicitly to the code that wants to allocate a chunk of memory.</p>
+<p>A single arena allocator holds a reference to (usually a single) pre-defined raw blob of memory. It can point to a heap-allocated vector or to a stack-allocated array, it really doesn't matter. As a result our <code>malloc</code> and <code>free</code> functions are somewhat special:</p>
+<ul>
+<li><code>malloc</code> simply "cuts" requested amount of memory from the blob</li>
+<li><code>free</code> is not even needed, the memory is automatically released once the blob is deleted</li>
+</ul>
+<p><img src="/what_is_arena_allocator.png" alt="what_is_arena_allocator.png" /></p>
+<p>So to allocate a struct that takes N bytes we need to:</p>
+<ol>
+<li>add N to our write pointer</li>
+<li>return <code>write pointer - N</code> (initial value)</li>
+</ol>
+<p>Of course it also requires alignment handling but for now it's out of scope. It will be covered later in the implementation section.</p>
+<p>To release memory we simply release the blob itself, so it's like a batched deallocation, sort of. The consequence here is that all of our types must be:</p>
+<ol>
+<li>trivially copyable (<code>: Copy</code> if we speak in Rust)</li>
+<li>trivially destructible (i.e. they can't have <code>impl Drop</code>)</li>
+</ol>
+<p>Both of this constraints are fine for my use-case.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="intrusive-data-structures"><a class="header" href="#intrusive-data-structures">Intrusive data structures</a></h1>
+<p>What if our program needs to allocate more that just numbers and sequences of numbers? In my library I need at least:</p>
+<ol>
+<li>single linked lists (for append-only lists of AST nodes)</li>
+<li>double linked lists (for some internal data structures that can be extended both ways via <code>{push,pop}_{back,front}</code>)</li>
+<li>hashmaps (to handle things like a set of local variables better-than-in-<code>O(N)</code>)</li>
+<li>dynamic consecutive arrays (for all kinds of strings)</li>
+</ol>
+<p>This is the place where things get complicated.</p>
+<p>Let's say we have a single linked list that is (somehow?) allocated on arena and we want to push existing arena-allocated value to this list. If it's written in a traditional way that would be something like</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct List&lt;T&gt; {
+    head: *mut ListNode&lt;T&gt;,
+    tail: *mut ListNode&lt;T&gt;,
+}
+
+struct ListNode&lt;T&gt; {
+    value: T,
+    next: *mut ListNode&lt;T&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<p>where <code>T</code> can be literally anything, and <code>*mut T</code> points to some place on arena where <code>T</code> is located. There's one problem though: <code>T</code> must be a part of the <code>ListNode</code> and so when we append it to a list we are force to either:</p>
+<ol>
+<li>allocate a new <code>ListNode</code> and copy <code>T</code> into it</li>
+<li>embed a pointer to <code>*const T</code> in <code>ListNode</code> instead of the <code>T</code> itself</li>
+</ol>
+<p>The former is not only slow in some cases (if <code>T</code> is big enough) but also requires singnificantly more memory, because every time we push <code>T</code> we consume <code>sizeof(T)</code> memory of arena.</p>
+<p>The latter introduces an unnecessary level of indirection that makes lookups slower (because we need to go through another pointer every time we read a list item).</p>
+<p>Here comes a solution: <strong>intrusive data structures</strong>.</p>
+<blockquote>
+<p>Elements of intrusive data structures know that they belongs to a certain structure.</p>
+</blockquote>
+<p>Yes, when I explained this concept to my friend his first impression was "wait, but it strongly violates encapsulation". And yes, he was absolutely correct, but that's the point.</p>
+<p>Not every <code>T</code> can become an element of a single-linked intrusive list, only those that have some extra data fields that <code>List&lt;T&gt;</code> expects.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="single-linked-list"><a class="header" href="#single-linked-list">Single linked list</a></h1>
+<p>For <code>T</code> to be an element of a single linked list it must store a pointer to <code>next</code> inside of <code>T</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Foo {
+    value: i32,
+    next: Cell&lt;Option&lt;NonNull&lt;Foo&gt;&gt;&gt;
+}
+<span class="boring">}</span></code></pre></pre>
+<ol>
+<li><code>Cell</code> here allows us to have interior mutability and modify its value via a <code>const</code> reference</li>
+<li><code>Option&lt;NonNull&lt;T&gt;&gt;</code> is just a safer way to have <code>*mut T</code>: we have to explicitly check for <code>None</code> instead of <code>is_null()</code></li>
+</ol>
+<p>And the list could look like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct SingleLinkedIntrusiveList&lt;'b, T&gt;
+where
+    T: SingleLinkedIntrusiveListItem,
+{
+    first: Cell&lt;Option&lt;NonNull&lt;T&gt;&gt;&gt;,
+    last: Cell&lt;Option&lt;NonNull&lt;T&gt;&gt;&gt;,
+    _marker: core::marker::PhantomData&lt;&amp;'b ()&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<p>where:</p>
+<ol>
+<li><code>'b</code> is the lifetime of our arena. It shouldn't be possible for any arena-allocated structure to outlive the memory that it's located on.</li>
+<li><code>T: SingleLinkedIntrusiveListItem</code> is our constraint for elements of the list</li>
+</ol>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait SingleLinkedIntrusiveListItem {
+    fn next(&amp;self) -&gt; Option&lt;NonNull&lt;Self&gt;&gt;;
+    fn set_next(&amp;self, new_next: Option&lt;NonNull&lt;Self&gt;&gt;);
+}
+
+impl SingleLinkedIntrusiveListItem for Foo {
+    fn next(&amp;self) -&gt; Option&lt;NonNull&lt;Self&gt;&gt; {
+        self.next.get()
+    }
+
+    fn set_next(&amp;self, new_next: Option&lt;NonNull&lt;Self&gt;&gt;) {
+        self.next.set(new_next)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Operations like <code>.push(&amp;'b Foo)</code> and <code>.pop()</code> are the same as for the "standard" linked list, but instead of writing <code>.next</code> to <code>List</code> elements we write them straight to <code>T</code> using <code>.set_next()</code>.</p>
+<p><img src="/intrusive_single_linked_list.png" alt="intrusive_single_linked_list.png" /></p>
+<p>As a result, any <code>T: SingleLinkedIntrusiveListItem</code>:</p>
+<ol>
+<li>can be added to any existing list at any time, and this operation doesn't require any additional memory.</li>
+<li>can belong only to a single linked list. This requires a note that lists can "embed" each other and then elements can be "shared" (because their <code>next</code> pointer remains the same for both lists), and so operations like <code>list1.concat(list2)</code> can be easily implemented with no copying.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="double-linked-list"><a class="header" href="#double-linked-list">Double linked list</a></h1>
+<p>It's almost the same as our single linked lists, except that we need to have another constraint for <code>T</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait DoubleLinkedIntrusiveListItem {
+    fn prev(&amp;self) -&gt; Option&lt;NonNull&lt;Self&gt;&gt;;
+    fn set_prev(&amp;self, new_prev: Option&lt;NonNull&lt;Self&gt;&gt;);
+    fn next(&amp;self) -&gt; Option&lt;NonNull&lt;Self&gt;&gt;;
+    fn set_next(&amp;self, new_next: Option&lt;NonNull&lt;Self&gt;&gt;);
+}
+<span class="boring">}</span></code></pre></pre>
+<p>and so to have a list of numbers our supplementary data structure must look like this:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct IntrusiveNumber {
+    n: u64,
+    prev: Cell&lt;Option&lt;NonNull&lt;Self&gt;&gt;&gt;,
+    next: Cell&lt;Option&lt;NonNull&lt;Self&gt;&gt;&gt;,
+}
+
+impl DoubleLinkedIntrusiveListItem for IntrusiveNumber {
+    fn prev(&amp;self) -&gt; Option&lt;NonNull&lt;Self&gt;&gt; {
+        self.prev.get()
+    }
+
+    fn set_prev(&amp;self, new_prev: Option&lt;NonNull&lt;Self&gt;&gt;) {
+        self.prev.set(new_prev)
+    }
+
+    fn next(&amp;self) -&gt; Option&lt;NonNull&lt;Self&gt;&gt; {
+        self.next.get()
+    }
+
+    fn set_next(&amp;self, new_next: Option&lt;NonNull&lt;Self&gt;&gt;) {
+        self.next.set(new_next)
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>It might sound like it requires too much memory and in the case of a number that's probably true. However I only need it for some internal data structures that are allocated <a href="/memory_usage_optimisations.html">on the scratch arena</a>.</p>
+<p>It's possible to slightly reduce memory usage <a href="/memory_usage_optimisations.html">by using relative offsets</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="hashmaps"><a class="header" href="#hashmaps">Hashmaps</a></h1>
+<p>Hashmaps are more complex but what's important I only need something like a <code>HashSet&lt;&amp;str&gt;</code> so the data structure doesn't really need to be intrusive. However, it should be arena-friendly and it must require 0 heap allocations.</p>
+<p>I took inspiration from <a href="https://nullprogram.com/blog/2023/09/30/">this blog post</a> (I highly recommend to go and read it, it explains this concept much better than me), the idea is that we'll pack our hash table as a tree where each node has 4 nullable children:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct ArenaHashMap&lt;'b, K, V&gt;
+where
+    K: Copy + SimpleHash + PartialEq + 'b,
+    V: Copy + 'b,
+{
+    children: UnsafeCell&lt;[*const Self; 4]&gt;,
+    key: Cell&lt;Option&lt;K&gt;&gt;,
+    value: Cell&lt;V&gt;,
+    _marker: core::marker::PhantomData&lt;&amp;'b ()&gt;,
+    prev: Cell&lt;Option&lt;NonNull&lt;Self&gt;&gt;&gt;,
+    next: Cell&lt;Option&lt;NonNull&lt;Self&gt;&gt;&gt;,
+}
+
+trait SimpleHash {
+    fn simple_hash(self) -&gt; usize;
+}
+<span class="boring">}</span></code></pre></pre>
+<ol>
+<li>again, our <code>ArenaHashMap</code> can't outlive the blob that lives for <code>'b</code></li>
+<li>I want it to store either primitives or arena-allocated references, so keys and values should be <code>Copy</code></li>
+<li>instead of using <code>core::hash::Hash</code> I decided to go with a simpler custom trait that just returns a plain number as a hashsum. Now I can easily implement it for <code>&amp;str</code> and keep things simple.</li>
+</ol>
+<p>Each node has 4 children and when we compute the hash of <code>K</code> we break it down to groups of 2 bits (that's 4 distinct values, that's why we have 4 children) and literally take a route from the root to the leaf that matches our byte groups. If some parts of the path do not exist we construct them on-the-fly.</p>
+<p><img src="/intrusive_hashmaps.png" alt="intrusive_hashmaps.png" /></p>
+<p>So on each iteration we:</p>
+<ol>
+<li>look at <code>children[h &gt;&gt; 62]</code></li>
+<li>do <code>h &lt;&lt;= 2</code> before jumping to the next iteration</li>
+<li>we exit either once we reach an empty slot (then it's a new key), or once we get an existing node with the same hash + key.</li>
+</ol>
+<p>If it's an existing slot we check for collision by comparing a key stored in the slot with the key that we insert and if they are not equal we just keep looping and creating new leafs. At the end it looks like a linked list with all key/value pairs having the same hash (visually this list goes "down" from a leaf node of the tree like an icicle. Well, technically it's also a part of the tree).</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>unsafe fn insert_unsafe(mut node: *mut *const Self, key: K, value: V) {
+    let mut h = key.simple_hash();
+    while let Some(node_ref) = (*node).as_ref() {
+        if Some(key) == node_ref.key.get() {
+            node_ref.value.set(value);
+            return;
+        }
+        let children = UnsafeCell::raw_get(&amp;node_ref.children)
+            .as_mut()
+            .unwrap();
+
+        node = &amp;mut children[h &gt;&gt; 62];
+        h &lt;&lt;= 2;
+    }
+    *node = allocate_on_blob::&lt;Self&gt;();
+    (**node).key.set(Some(key));
+    (**node).value.set(value);
+}
+
+fn insert(hashmap: &amp;mut &amp;Self, key: K, value: V) {
+    let root_node: *mut *const Self = unsafe { core::mem::transmute(hashmap) };
+    unsafe { Self::insert_unsafe(root_node, key, value) };
+}
+<span class="boring">}</span></code></pre></pre>
+<p><code>allocate_on_blob</code> here is just a stub for simplicity, I'll cover it one of the next chapters.</p>
+<p>Lookup is trivial to implement, it has the same logic of iterating but returns an <code>Option&lt;V&gt;</code> instead of mutating.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="dynamic-consecutive-arrays"><a class="header" href="#dynamic-consecutive-arrays">Dynamic consecutive arrays</a></h1>
+<p>This is an easy one, it has the same API as the built-in <code>std::vec::Vec&lt;T&gt;</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct ByteArray&lt;'b&gt; {
+    ptr: Cell&lt;*mut u8&gt;,
+    len_in_bytes: Cell&lt;usize&gt;,
+    capacity_in_bytes: Cell&lt;usize&gt;,
+    marker: core::marker::PhantomData&lt;&amp;'b ()&gt;,
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Implementing methods like <code>.grow()</code>, <code>.push()</code> and <code>.pop()</code> is easy, you can use standard <code>vec</code> as a reference implementation.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="allocator-implementation"><a class="header" href="#allocator-implementation">Allocator implementation</a></h1>
+<p>This is the heart of the whole story.</p>
+<p>We want to have some data structure that:</p>
+<ol>
+<li>encapsulates a raw pointer + size behind it</li>
+<li>keeps track of where we have stopped writing</li>
+<li>has interior mutability for the write pointer</li>
+<li>allows to allocate (via const ref) a chunk of <code>N</code> bytes and moves the write pointer</li>
+</ol>
+<p>Also we need to be careful with alignment, we do support byte arrays that can reserve <code>2 ^ N</code> bytes, but most of our data structures have alignment 8 (because most of them encpsulate pointers of some kind).</p>
+<p>Here to simplify things we can introduce a simple (but reasonable) requirement: the region of memory that we take in control must be 8-byte-aligned (i.e. it should be a <code>*mut usize</code>), and there should be no way for us to access it as blob of bytes.</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Blob&lt;'b&gt; {
+    ptr: *mut usize,
+    len: Cell&lt;usize&gt;,
+    capacity: usize,
+    _marker: core::marker::PhantomData&lt;&amp;'b ()&gt;,
+}
+
+impl&lt;'b&gt; From&lt;&amp;'b mut [usize]&gt; for Blob&lt;'b&gt; {
+    fn from(slice: &amp;'b mut [usize]) -&gt; Self {
+        Self {
+            ptr: slice.as_mut_ptr(),
+            len: Cell::new(0),
+            capacity: slice.len(),
+            _marker: core::marker::PhantomData,
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>The blob can only be constructed from a slice of <code>usize</code> (e.g. from a stack allocated array <code>[usize; N]</code> or from heap-allocated <code>vec.as_mut_slice()</code>). Then allocations becomes much simpler:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use core::mem::{size_of, align_of};
+
+fn write_ptr(&amp;self) -&gt; *mut usize {
+    unsafe { self.ptr.add(self.len.get()) }
+}
+
+fn alloc_uninitialized&lt;T&gt;(&amp;self) -&gt; NonNull&lt;T&gt; {
+    assert_eq!(size_of::&lt;T&gt;() % size_of::&lt;usize&gt;(), 0);
+    assert_eq!(align_of::&lt;T&gt;(), size_of::&lt;usize&gt;());
+
+    let ptr = self.write_ptr();
+    let count = size_of::&lt;T&gt;() / size_of::&lt;usize&gt;();
+    self.assert_has_space_for_extra_words(count);
+
+    self.len.set(self.len.get() + count);
+    unsafe { NonNull::new_unchecked(ptr as *mut _) }
+}
+
+fn assert_has_space_for_extra_words(&amp;self, required_words: usize) {
+    let left = self.capacity - self.len.get();
+    assert!(
+        required_words &lt;= left,
+        "OOM error: can't allocate {} words, only {} has left",
+        required_words,
+        left
+    );
+}
+<span class="boring">}</span></code></pre></pre>
+<p>So instead of operating on <code>*const u8</code> we use <code>*const usize</code> and thus we can always be sure that our pointer is properly aligned.</p>
+<p>Bytes allocation (for <code>ByteArray</code>) requires some rounding though:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn push_bytes(&amp;self, bytes: &amp;[u8]) -&gt; &amp;'b [u8] {
+    let len_in_words = bytes.len().next_multiple_of(size_of::&lt;usize&gt;()) / size_of::&lt;usize&gt;();
+    self.assert_has_space_for_extra_words(len_in_words);
+    let ptr = self.write_ptr();
+
+    unsafe {
+        core::ptr::copy_nonoverlapping::&lt;u8&gt;(
+            bytes.as_ptr(),
+            self.write_ptr().cast(),
+            bytes.len(),
+        )
+    };
+
+    self.len.set(self.len.get() + len_in_words);
+
+    unsafe { core::slice::from_raw_parts(ptr.cast(), bytes.len()) }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>So if we need to write 10 bytes we write 16. The pointer is 8-byte-aligned before and after writing.</p>
+<p>Once we have these primitives we need to make decision on how our data structures must be initialized:</p>
+<ol>
+<li>we can enforce the underlying memory of the blob to be always zero-initialized (and <code>panic!</code> if it's not true), then those data structures that support zero initialization can be allocated as is, via <code>blob.alloc_uninitialized::&lt;T&gt;()</code></li>
+<li>we can add an explicit constructor to each structure that allocates on a blob and initializes acquired region with the default state</li>
+</ol>
+<p>I went with the second option, this way the array can be re-used between parser runs with no extra computations:</p>
+<pre><code class="language-ruby">let mut mem = [0; 1000];
+
+for file in files {
+    let blob = Blob::from(&amp;mut mem);
+    parse(file.content, &amp;blob);
+}
+</code></pre>
+<p>However it requires some extra code in each struct, and <code>Blob::alloc_uninitialized</code> must be explicitly marked as a private function so that no code accidentally calls it:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl ArenaAllocatedStruct {
+    // Having a dedicated method allows other structs
+    // to "embed" it and still have ability to
+    // initialize it with default fields.
+    // 
+    // This could also be `impl Default` of course.
+    fn new_in_place() -&gt; Self {
+        Self {
+            // ...
+        }
+    }
+
+    fn new_in(blob: &amp;Blob&lt;'b&gt;) -&gt; &amp;'b Self {
+        let this: &amp;'b mut Self = blob.alloc_uninitialized();
+        *this = Self::new_in_place();
+        this
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ast-nodes"><a class="header" href="#ast-nodes">AST nodes</a></h1>
+<p>Before and after the change AST nodes were represented as a sum type of all possible variants. <a href="https://github.com/lib-ruby-parser/nodes/blob/master/NODES.md">There's quite a lot of them</a>.</p>
+<p>For example, an <code>ArrayNode</code> that represents the following code</p>
+<pre><code class="language-ruby">[1, "foo", 42]
+</code></pre>
+<p>previously had roughly the following structure:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ArrayNode {
+    pub elements: Vec&lt;Node&gt;,
+    
+    pub begin_l: Option&lt;Loc&gt;,
+    pub end_l: Option&lt;Loc&gt;,
+    pub expression_l: Loc,
+}
+
+struct Loc {
+    pub begin: usize,
+    pub end: usize
+}
+
+enum Node {
+    ArrayNode(ArrayNode),
+    // ... other 100+ variants
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Now it's fully arena-allocated:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ArrayNode&lt;'b&gt; {
+    pub elements: &amp;'b List&lt;'b, Node&lt;'b&gt;&gt;,
+    
+    pub begin_l: Option&lt;Loc&gt;,
+    pub end_l: Option&lt;Loc&gt;,
+    pub expression_l: Loc,
+
+    next: Cell&lt;Option&lt;NonNull&lt;Node&lt;'b&gt;&gt;&gt;&gt;,
+}
+
+enum Node&lt;'b&gt; {
+    ArrayNode(ArrayNode&lt;'b&gt;),
+    // ... other 100+ variants
+}
+<span class="boring">}</span></code></pre></pre>
+<p>It's still possible to access fields and match on a node, however you can no longer pattern match on it without specify the <code>..</code> pattern in the fields list (as if it's been marked as <code>#[non_exhaustive]</code>)</p>
+<p>Also, to simplify instantiation of node I had to change builder functions. Previously I was able to construct any node from any place, but now there's a <code>next</code> pointer to support embedding a node in a <code>List&lt;Node&gt;</code>.</p>
+<p>I came up with the following solution:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;'b&gt; ArrayNode&lt;'b&gt; {
+    fn new_in&lt;F&gt;(blob: &amp;'b Blob&lt;'b&gt;, f: F) -&gt; &amp;'b Node&lt;'b&gt;
+    where
+        F: FnOnce(&amp;mut Self),
+    {
+        let mut uninit = MaybeUninit::&lt;Self&gt;::zeroed();
+        let mut_ref = unsafe { &amp;mut *uninit.as_mut_ptr() };
+
+        // .. initialize required fields on mut_ref
+        // of types like List&lt;T&gt; or ByteArray
+        mut_ref.elements = List::new_in(blob);
+
+        let mut variant = unsafe { uninit.assume_init() };
+
+        f(&amp;mut variant);
+
+        let node = blob.alloc_uninitialized_mut::&lt;Node&gt;();
+        *node = Node::ArrayNode(variant);
+
+        node
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>This way I can temporarily get access to the inner variant in a mutable fashion and get back at the end a wrapped <code>const Node</code> reference, which doesn't violate the rule of Rust of having no overlapping references in a single context:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let node: &amp;Node = ArrayNode::new_in(blob, |array| {
+    array.elements.push(child1, blob);
+    array.elements.push(child2, blob);
+    array.elements.push(child3, blob);
+
+    array.begin_l = Some(Loc::new(...));
+    array.end_l = Some(Loc::new(...));
+    array.expression_l = Loc::new(...);
+});
+<span class="boring">}</span></code></pre></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="no_std"><a class="header" href="#no_std">#![no_std]</a></h1>
+<p>To make sure that there's not even a single allocation anywhere in the code the easiest solution is to enable a <code>#![no_std]</code> crate-level flag.</p>
+<p>Luckily there are multiple "modules" in the parser library that can be migrated independently:</p>
+<ol>
+<li>AST library. This is a separate crate that contains types of AST nodes and all kinds of parsing errors. Now it also comes with all of the arena-related data structures that I mentioned before, and I was able to add <strong>both the new and the old</strong> versions of this library to the root parser crate.</li>
+<li>Lexer (or tokenizer if you prefer). An iterator-like object that returns tokens, one by one. I wished it shared less state with the parser, but it's Ruby. I was able to gradually make small parts <code>no_std</code>-compatible, one step at a time.</li>
+<li>Diagnostic messages, this is the module that reports errors/warnings, and it's pretty self-contained. I slowly migrated it to use the version of the AST library and allocate everything on arena.</li>
+<li>The parser itself. This was the biggest all-or-nothing change, took me almost a week.</li>
+<li>Unit tests. I'm using file-based fixtures, for each of them there's a unit test that reads it from the disk, parses it to split input vs expected output and runs the parser. That was also a relatively easy change. <code>std::fs::read</code> is now <code>include_bytes!</code>, so no FS logic is needed.</li>
+</ol>
+<p>Low-level parts related to arena have been fully tested with <code>miri</code>, and their interfaces are safe, so migration overall was easy. If you have safe and stable primitives as your building bricks migration becomes mostly mechanical work.</p>
+<p>From some POV <code>no_std</code> is an insanely strict requirement for the code that probably is going to run on a full <code>std</code> environment anyway. However I don't see any other way to keep track of allocations other that providing a custom global <code>Allocator</code> that <code>panic!</code>-s at runtime if you try to allocate. Honestly, I prefer a compile-time error here.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="benchmarks"><a class="header" href="#benchmarks">Benchmarks</a></h1>
+<p>For benchmarks I've made a script that downloads top 300 Ruby libraries (by total downloads) and unpacks them.</p>
+<p>The corpus contains:</p>
+<ol>
+<li><code>4176379</code> LOC</li>
+<li><code>170114575</code> bytes</li>
+</ol>
+<p>Results on my local MBP on M2:</p>
+<div class="table-wrapper"><table><thead><tr><th>Parser</th><th>Total time</th><th>Bytes per second</th><th>Lines per second</th></tr></thead><tbody>
+<tr><td>lib-ruby-parser (arena)</td><td>~1.93s</td><td>~88,000,000</td><td>~2,160,000</td></tr>
+<tr><td>lib-ruby-parser (heap)</td><td>~4.4s</td><td>~38,000,000</td><td>~950,000</td></tr>
+<tr><td>ripper (Ruby 3.3.1)</td><td>~24s</td><td>~7,000,000</td><td>~175,000</td></tr>
+<tr><td>whitequark/parser</td><td>~245s</td><td>~700,000</td><td>~17,000</td></tr>
+</tbody></table>
+</div>
+<p><code>ripper</code> and <code>whitequark/parser</code> are here just to show how fast things can get:</p>
+<ol>
+<li><code>ripper</code> is a built-in Ruby parser</li>
+<li><code>whitequark/parser</code> is a popular Ruby parser written in Ruby (yep, that's not a fare comparison at all)</li>
+</ol>
+<p>For both of them I've disabled garbage collection and they both have no IO while running tests (i.e. becnhmark script reads all the files, then stops GC, then parses each file in a loop)</p>
+<p>Results on my local Intel i5-11400 on Debian Sid:</p>
+<div class="table-wrapper"><table><thead><tr><th>Parser</th><th>Total time</th><th>Bytes per second</th><th>Lines per second</th></tr></thead><tbody>
+<tr><td>lib-ruby-parser (arena)</td><td>~3.18s</td><td>~TODO</td><td>~TODO</td></tr>
+<tr><td>lib-ruby-parser (heap)</td><td>~7.2s</td><td>~TODO</td><td>~TODO</td></tr>
+<tr><td>ripper (Ruby 3.3.1)</td><td>~18.2s</td><td>~TODO</td><td>~TODO</td></tr>
+</tbody></table>
+</div>
+<p>Ripper is doing better on Linux, I assume there's something wrong with <code>aarch64</code> builds of Ruby (or <code>glibc</code> allocator is significantly better than whatever comes with MacOS).</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="flamegraphs"><a class="header" href="#flamegraphs">Flamegraphs</a></h1>
+<p>Both SVGs have been generated using <code>pprof</code>, both are interactive, just click on them.</p>
+<h2 id="before"><a class="header" href="#before">Before</a></h2>
+<p><a href="/flamegraph-before.svg"><img src="/flamegraph-before.svg" alt="flamegraph-before.svg" /></a></p>
+<h2 id="after"><a class="header" href="#after">After</a></h2>
+<p><a href="/flamegraph-after.svg"><img src="/flamegraph-after.svg" alt="flamegraph-after.svg" /></a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="memory-usage-optimisations"><a class="header" href="#memory-usage-optimisations">Memory usage optimisations</a></h1>
+<p>First, it should be possible to allocate temporary data on a <strong>different temporary arena</strong> (let's call it <code>scratch</code>). It can be passed to parser-tokenizer-whatever-else-needs-memory and all one-time objects could be written there instead.</p>
+<p>If we are fully cofident about the lifespan of these temporary objects we can go further and implement it as a circular buffer, so that old temporary data will be automatically overwritten with new temporary data.</p>
+<p>Second, instead of using pointers we can use <strong>relative offsets</strong>. A single offset can be just a 32-bit signed integer, which allows us to:</p>
+<ol>
+<li>have "links" in our data that are able to index 2GB left and 2GB right on arena (technically everything is 8-byte-aligned, so we can count in "words" and have 16GB both ways)</li>
+<li>take twice less space (unless they have to be zero-padded because there are no fields to fill the gap)</li>
+</ol>
+<p><img src="/memory_usage_optimisations.png" alt="memory_usage_optimisations.png" /></p>
+<p>These two <code>i32</code> offsets can be packed in a single word:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(transparent)]
+struct PairOfOffsets&lt;T&gt; {
+    // to enforce alignment = 8
+    packed: Cell&lt;usize&gt;
+    marker: core::marker::PhantomData&lt;T&gt;
+}
+
+impl&lt;T&gt; PairOfOffsets&lt;T&gt; {
+    fn set_first(&amp;self, ptr: *T) {
+        let [_, last]: [i32; 2] = transmute(self.packed.get());
+        let new_first = ptr.offset_from(self as const *Self);
+        self.packed.set(transmute([new_first, last]))
+    }
+
+    fn first&lt;'b&gt;(&amp;self) -&gt; Option&lt;&amp;'b T&gt; {
+        let [first, _]: [i32; 2] = transmute(self.packed.get());
+        first.as_ref()
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>It can be zero-initialized (in such case both refs are <code>None</code>) and it takes only 8 bytes.</p>
+<ol>
+<li><code>List&lt;T&gt;</code> with this optimisation takes 1 word instead of 2</li>
+<li><code>HashMap</code> can have an array of 2 <code>PairOfOffsets</code> instead of 4 pointers to maintain a tree structure (which saves us two words per node)</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ast-caching"><a class="header" href="#ast-caching">AST caching</a></h1>
+<p>As I mentioned before it's guaranteed that produced AST has references only to other arena-allocated objects, which means that it's possible</p>
+<ol>
+<li>to write the content of arena straight on disk</li>
+<li>read it later and "re-interpret" back to AST</li>
+</ol>
+<p>The code could look roughly like this:</p>
+<pre><pre class="playground"><code class="language-rust">fn main() {
+    dump();
+
+    // This code below is meant to be executed later
+    let data = read();
+    let node = load(&amp;data);
+}
+
+// Parses code, dumps it to a temp file, returns nothing
+fn dump() {
+    let code = b"10 + 20";
+
+    let mut mem = [0; 1000];
+    let base_ptr = &amp;mem as *const usize;
+    let blob = Blob::from(&amp;mut mem);
+
+    let ast: &amp;Node = Parser::new(code, &amp;blob).parse().ast.unwrap();
+
+    let mut f = File::create("/tmp/ast").unwrap();
+
+    let root_node_offset = unsafe {
+        let node_ptr = ast as *const Node;
+        let offset = node_ptr.byte_offset_from(base_ptr);
+        assert!(offset &gt; 0);
+        offset
+    };
+    f.write_all(&amp;usize_to_bytes(root_node_offset as usize)).unwrap();
+    f.write_all(blob.data()).unwrap();
+}
+
+fn read() -&gt; Vec&lt;u8&gt; {
+    let mut f = File::open("tmp/ast").unwrap();
+    let mut data = vec![];
+    f.read_to_end(&amp;mut data).unwrap();
+    data
+}
+
+fn load(data: &amp;[u8]) -&gt; &amp;Node {
+    let root_node_offset = bytes_to_usize(*data.first_chunk().unwrap());
+    let data = &amp;data[8..];
+
+    unsafe { data.as_ptr().add(root_node_offset).cast::&lt;Node&gt;().as_ref().unwrap() }
+}
+
+fn usize_to_bytes(n: usize) -&gt; [u8; 8] {
+    n.to_ne_bytes()
+}
+fn bytes_to_usize(bytes: [u8; 8]) -&gt; usize {
+    unsafe { core::mem::transmute(bytes) }
+}</code></pre></pre>
+<p>This could be a huge advantage for static analysis tools, caching becomes just</p>
+<ol>
+<li>read <code>mtime</code> of the source file</li>
+<li>check if cached AST is newer, read + return if so</li>
+<li>otherwise, parse it and write on disk</li>
+</ol>
+<p>AST of multiple source files could probably be packed together in a single binary file (e.g. based on hierarchy of files, a bin file per directory)</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>
