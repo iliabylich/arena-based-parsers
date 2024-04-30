@@ -200,7 +200,7 @@
 <li><code>malloc</code> simply "cuts" requested amount of memory from the blob</li>
 <li><code>free</code> is not even needed, the memory is automatically released once the blob is deleted</li>
 </ul>
-<p><img src="/what_is_arena_allocator.png" alt="what_is_arena_allocator.png" /></p>
+<p><img src="../what_is_arena_allocator.png" alt="what_is_arena_allocator.png" /></p>
 <p>So to allocate a struct that takes N bytes we need to:</p>
 <ol>
 <li>add N to our write pointer</li>
@@ -296,7 +296,7 @@ impl SingleLinkedIntrusiveListItem for Foo {
 }
 <span class="boring">}</span></code></pre></pre>
 <p>Operations like <code>.push(&amp;'b Foo)</code> and <code>.pop()</code> are the same as for the "standard" linked list, but instead of writing <code>.next</code> to <code>List</code> elements we write them straight to <code>T</code> using <code>.set_next()</code>.</p>
-<p><img src="/intrusive_single_linked_list.png" alt="intrusive_single_linked_list.png" /></p>
+<p><img src="../intrusive_single_linked_list.png" alt="intrusive_single_linked_list.png" /></p>
 <p>As a result, any <code>T: SingleLinkedIntrusiveListItem</code>:</p>
 <ol>
 <li>can be added to any existing list at any time, and this operation doesn't require any additional memory.</li>
@@ -370,7 +370,7 @@ trait SimpleHash {
 <li>instead of using <code>core::hash::Hash</code> I decided to go with a simpler custom trait that just returns a plain number as a hashsum. Now I can easily implement it for <code>&amp;str</code> and keep things simple.</li>
 </ol>
 <p>Each node has 4 children and when we compute the hash of <code>K</code> we break it down to groups of 2 bits (that's 4 distinct values, that's why we have 4 children) and literally take a route from the root to the leaf that matches our byte groups. If some parts of the path do not exist we construct them on-the-fly.</p>
-<p><img src="/intrusive_hashmaps.png" alt="intrusive_hashmaps.png" /></p>
+<p><img src="../intrusive_hashmaps.png" alt="intrusive_hashmaps.png" /></p>
 <p>So on each iteration we:</p>
 <ol>
 <li>look at <code>children[h &gt;&gt; 62]</code></li>
@@ -667,9 +667,9 @@ enum Node&lt;'b&gt; {
 <div style="break-before: page; page-break-before: always;"></div><h1 id="flamegraphs"><a class="header" href="#flamegraphs">Flamegraphs</a></h1>
 <p>Both SVGs have been generated using <code>pprof</code>, both are interactive, just click on them.</p>
 <h2 id="before"><a class="header" href="#before">Before</a></h2>
-<p><a href="/flamegraph-before.svg"><img src="/flamegraph-before.svg" alt="flamegraph-before.svg" /></a></p>
+<p><a href="../flamegraph-before.svg"><img src="../flamegraph-before.svg" alt="flamegraph-before.svg" /></a></p>
 <h2 id="after"><a class="header" href="#after">After</a></h2>
-<p><a href="/flamegraph-after.svg"><img src="/flamegraph-after.svg" alt="flamegraph-after.svg" /></a></p>
+<p><a href="../flamegraph-after.svg"><img src="../flamegraph-after.svg" alt="flamegraph-after.svg" /></a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="memory-usage-optimisations"><a class="header" href="#memory-usage-optimisations">Memory usage optimisations</a></h1>
 <p>First, it should be possible to allocate temporary data on a <strong>different temporary arena</strong> (let's call it <code>scratch</code>). It can be passed to parser-tokenizer-whatever-else-needs-memory and all one-time objects could be written there instead.</p>
 <p>If we are fully cofident about the lifespan of these temporary objects we can go further and implement it as a circular buffer, so that old temporary data will be automatically overwritten with new temporary data.</p>
@@ -678,7 +678,7 @@ enum Node&lt;'b&gt; {
 <li>have "links" in our data that are able to index 2GB left and 2GB right on arena (technically everything is 8-byte-aligned, so we can count in "words" and have 16GB both ways)</li>
 <li>take twice less space (unless they have to be zero-padded because there are no fields to fill the gap)</li>
 </ol>
-<p><img src="/memory_usage_optimisations.png" alt="memory_usage_optimisations.png" /></p>
+<p><img src="../memory_usage_optimisations.png" alt="memory_usage_optimisations.png" /></p>
 <p>These two <code>i32</code> offsets can be packed in a single word:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

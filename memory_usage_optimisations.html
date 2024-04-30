@@ -181,7 +181,7 @@
 <li>have "links" in our data that are able to index 2GB left and 2GB right on arena (technically everything is 8-byte-aligned, so we can count in "words" and have 16GB both ways)</li>
 <li>take twice less space (unless they have to be zero-padded because there are no fields to fill the gap)</li>
 </ol>
-<p><img src="/memory_usage_optimisations.png" alt="memory_usage_optimisations.png" /></p>
+<p><img src="../memory_usage_optimisations.png" alt="memory_usage_optimisations.png" /></p>
 <p>These two <code>i32</code> offsets can be packed in a single word:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

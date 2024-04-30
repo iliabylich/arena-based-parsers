@@ -221,7 +221,7 @@ impl SingleLinkedIntrusiveListItem for Foo {
 }
 <span class="boring">}</span></code></pre></pre>
 <p>Operations like <code>.push(&amp;'b Foo)</code> and <code>.pop()</code> are the same as for the "standard" linked list, but instead of writing <code>.next</code> to <code>List</code> elements we write them straight to <code>T</code> using <code>.set_next()</code>.</p>
-<p><img src="/intrusive_single_linked_list.png" alt="intrusive_single_linked_list.png" /></p>
+<p><img src="../intrusive_single_linked_list.png" alt="intrusive_single_linked_list.png" /></p>
 <p>As a result, any <code>T: SingleLinkedIntrusiveListItem</code>:</p>
 <ol>
 <li>can be added to any existing list at any time, and this operation doesn't require any additional memory.</li>
