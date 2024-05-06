@@ -174,13 +174,15 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="tldr"><a class="header" href="#tldr">TL;DR</a></h1>
-<p>This micro-book is about programming language parsers, memory allocations and arenas.</p>
+<p>This micro-book is about parsers, memory allocations and arenas.</p>
 <ul>
+<li>The parser is written in Rust, it parses code in Ruby. You don't need to know both though.</li>
 <li>The change that I'm describing here made a parser that I created in the past to go from 37MB/s to 80MB/s (which is roughly a 2x improvement)</li>
 <li>I was able to completely eliminate all heap allocations (the parser is written in Rust, so it runs in <code>#[no_std]</code> mode)</li>
 <li>Result of the parsing is located exclusively on arena, so the whole blob of underlying memory can be written on disk and later <code>mmap</code>-ed to quickly get it back if needed, so AST caching is significantly easier.</li>
 </ul>
-<p>The code is a bit "experimental" but it's available in the <a href="https://github.com/lib-ruby-parser/lib-ruby-parser/tree/arena-fixes"><code>arena-fixes</code> branch</a> (make sure to enable <code>--features=development</code> if you run it from a Git repo)</p>
+<p>The code is a bit "experimental" but it's available in the <a href="https://github.com/lib-ruby-parser/lib-ruby-parser/tree/arena-fixes"><code>arena-fixes</code> branch</a> (make sure to enable <code>--features=development</code> if you run it from a Git repo).</p>
+<p><strong>I am not going to release it. If you need a Ruby parser better try <a href="https://github.com/ruby/prism"><code>prism</code></a> (it has Rust bindings that are available on crates.io). This whole story is more like an experiment to see if it's worth doing this type of work.</strong></p>
 
                     </main>
 
