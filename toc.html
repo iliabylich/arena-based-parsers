@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- sidebar iframe generated using mdBook
+
+        This is a frame, and not included directly in the page, to control the total size of the
+        book. The TOC contains an entry for each page, so if each page includes a copy of the TOC,
+        the total size of the page becomes O(n**2).
+
+        The frame is only used as a fallback when JS is turned off. When it's on, the sidebar is
+        instead added to the main page by `toc.js` instead. The JavaScript mode is better
+        because, when running in a `file:///` URL, the iframed page would not be Same-Origin as
+        the rest of the page, so the sidebar and the main page theme would fall out of sync.
+        -->
+        <meta charset="UTF-8">
+        <meta name="robots" content="noindex">
+        <!-- Custom HTML head -->
+        <script>
+            if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    const counter = document.createElement('div');
+                    counter.className = 'pageview-counter';
+                    counter.innerHTML = '<img src="https://pageview.ibylich.dev/count?p=' + window.location.pathname + '" alt="Page views">';
+                    document.body.appendChild(counter);
+                });
+            }
+        </script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+        <!-- Custom theme stylesheets -->
+    </head>
+    <body class="sidebar-iframe-inner">
+        <ol class="chapter"><li class="chapter-item expanded affix "><a href="tldr.html" target="_parent">TL;DR</a></li><li class="chapter-item expanded "><a href="what_is_arena_allocator.html" target="_parent"><strong aria-hidden="true">1.</strong> What is arena allocator</a></li><li class="chapter-item expanded "><a href="intrusive_data_structures.html" target="_parent"><strong aria-hidden="true">2.</strong> Intrusive data structures</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intrusive_single_linked_list.html" target="_parent"><strong aria-hidden="true">2.1.</strong> Single linked list</a></li><li class="chapter-item expanded "><a href="intrusive_double_linked_list.html" target="_parent"><strong aria-hidden="true">2.2.</strong> Double linked list</a></li><li class="chapter-item expanded "><a href="intrusive_hashmaps.html" target="_parent"><strong aria-hidden="true">2.3.</strong> Hashmaps</a></li><li class="chapter-item expanded "><a href="dynamic_consecutive_arrays.html" target="_parent"><strong aria-hidden="true">2.4.</strong> Dynamic consecutive arrays</a></li></ol></li><li class="chapter-item expanded "><a href="allocator_implementation.html" target="_parent"><strong aria-hidden="true">3.</strong> Allocator implementation</a></li><li class="chapter-item expanded "><a href="ast_nodes.html" target="_parent"><strong aria-hidden="true">4.</strong> AST nodes</a></li><li class="chapter-item expanded "><a href="no_std.html" target="_parent"><strong aria-hidden="true">5.</strong> #![no_std]</a></li><li class="chapter-item expanded "><a href="benchmarks.html" target="_parent"><strong aria-hidden="true">6.</strong> Benchmarks</a></li><li class="chapter-item expanded "><a href="flamegraphs.html" target="_parent"><strong aria-hidden="true">7.</strong> Flamegraphs</a></li><li class="chapter-item expanded "><a href="memory_usage_optimisations.html" target="_parent"><strong aria-hidden="true">8.</strong> Memory usage optimisations</a></li><li class="chapter-item expanded "><a href="ast_caching.html" target="_parent"><strong aria-hidden="true">9.</strong> AST caching</a></li></ol>
+    </body>
+</html>
