@@ -1,0 +1,10 @@
+<script>
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        document.addEventListener('DOMContentLoaded', function () {
+            const counter = document.createElement('div');
+            counter.className = 'pageview-counter';
+            counter.innerHTML = '<img src="https://pageview.ibylich.dev/count?p=' + window.location.pathname + '" alt="Page views">';
+            document.body.appendChild(counter);
+        });
+    }
+</script>
